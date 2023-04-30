@@ -25,8 +25,10 @@ app.get("/api/:date?", function (req, res) {
   if(req.params.date){
     if(req.params.date.match(RegExp("[0-9]{4}[-/][0-9]{2}[-/][0-9]{2}"))){
       date=new Date(req.params.date);
-    }else{
+    }else if(req.params.date.match(RegExp("[0-9]."))){
       date=new Date(parseInt(req.params.date));
+    }else{
+      res.json({"error":"Invalid Date"});
     }
   }
   res.json({"unix": date.getTime(),"utc":date.toUTCString()});
