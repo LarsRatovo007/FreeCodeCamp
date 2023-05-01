@@ -33,12 +33,11 @@ app.get("/api/hello", function (req, res) {
 
 app.post("/api/shorturl", (req, res) => {
   let url = req.body.url;
-  url = url.replace(new RegExp("(https|http)://"), "");
-  if (url.endsWith("/")) {
-    url = url.substring(0, url.length - 1);
+  let test = url.replace(new RegExp("(https|http)://"), "");
+  if (test.endsWith("/")) {
+    test = test.substring(0, test.length - 1);
   }
-  console.log(url);
-  dns.lookup(url, (error, address, family) => {
+  dns.lookup(test, (error, address, family) => {
     if (error) {
       return res.json({ error: "invalid url" });
     }
@@ -65,7 +64,7 @@ app.get("/api/shorturl/:id", (req, res) => {
   let id = req.params.id;
   Url.findById(id)
     .then((url) => {
-      res.redirect("http://" + url.url);
+      res.redirect(url.url);
     })
     .catch((error) => {
       res.json({ error: err });
