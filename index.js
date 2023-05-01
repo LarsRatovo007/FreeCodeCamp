@@ -37,6 +37,9 @@ app.post("/api/shorturl", (req, res) => {
   if (test.endsWith("/")) {
     test = test.substring(0, test.length - 1);
   }
+  if (url.endsWith("/")) {
+    url = test.substring(0, url.length - 1);
+  }
   dns.lookup(test, (error, address, family) => {
     if (error) {
       return res.json({ error: "invalid url" });
