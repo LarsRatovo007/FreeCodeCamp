@@ -20,6 +20,10 @@ const Log=mongoose.model('log',logSchema);
 app.use(cors())
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
+app.use((req,res,next)=>{
+  console.log(req.url);
+  next();
+})
 app.use(express.static('public'))
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
