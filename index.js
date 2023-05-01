@@ -71,7 +71,9 @@ app.post('/api/users/:_id/exercises',(req,res)=>{
     return res.json({error:'Error occured'})
   });
 });
-
+app.get('/api/users',(req,res)=>{
+  Admin.find().then(users=> res.json(users));
+})
 app.get('/api/users/:_id/logs',(req,res)=>{
   Admin.findById(req.params._id).then(admin=>{
     if(admin){
