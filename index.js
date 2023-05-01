@@ -52,7 +52,8 @@ app.post('/api/users/:_id/exercises',(req,res)=>{
   Admin.findById(id).then(admin=>{
     if(admin){
       let data={
-        id:id,
+        _id:id,
+        username:admin.username,
         description:desc,
         duration:duration,
         date:date.toDateString()
