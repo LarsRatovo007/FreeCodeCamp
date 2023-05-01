@@ -56,7 +56,7 @@ app.post('/api/users/:_id/exercises',(req,res)=>{
   Admin.findById(id).then(admin=>{
     if(admin){
       let data={
-        _id:id,
+        owner:id,
         username:admin.username,
         description:desc,
         duration:parseInt(duration),
@@ -65,7 +65,13 @@ app.post('/api/users/:_id/exercises',(req,res)=>{
       let log=new Log(data);
       log.save().then(l=>{
         if(l){
-          return res.json(data);
+          return res.json({
+            _id:id,
+            username:admin.username,
+            description:desc,
+            duration:parseInt(duration),
+            date:date.toDateString()
+          });
         }
       })
     }else{
@@ -85,7 +91,7 @@ app.get('/api/users/:_id/logs',(req,res)=>{
       let from=req.query.from;
       let to=req.query.to;
       let limit=req.query.limit;
-      let query=Log.find({id:admin._id});
+      let query=Log.find({owner:admin._id});
       if(from){
         query=query.where('date').gte(new Date(from));
       }
