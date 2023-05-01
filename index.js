@@ -1,77 +1,128 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const dns = require("dns");
-const mongoose = require("mongoose");
-const mongo = mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-const app = express();
+const express = require('express')
+const mongoose=require('mongoose')
+const app = express()
+const cors = require('cors')
 
-// Basic Configuration
-const port = process.env.PORT || 3000;
-const schema = new mongoose.Schema({
-  _id: Number,
-  url: String,
-});
-const Url = mongoose.model("url", schema);
-app.use(cors());
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+require('dotenv').config()
+const mongo=mongoose.connect(process.env.MONGO_URI,{useNewUrlParser:true,useUnifiedTopology:true});
 
-app.use("/public", express.static(`${process.cwd()}/public`));
-
-app.get("/", function (req, res) {
-  res.sendFile(process.cwd() + "/views/index.html");
-});
-
-// Your first API endpoint
-app.get("/api/hello", function (req, res) {
-  res.json({ greeting: "hello API" });
+const adminSchema=new mongoose.Schema({
+  username:String
+})
+const logSchema=new mongoose.Schema({
+  id:String,
+  description:String,
+  duration:Number,
+  date:Date
+})
+const Admin=mongoose.model('admin',adminSchema);
+const Log=mongoose.model('log',logSchema);
+app.use(cors())
+app.use(express.urlencoded({extended:false}))
+app.use(express.json())
+app.use(express.static('public'))
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/views/index.html')
 });
 
-app.post("/api/shorturl", (req, res) => {
-  let url = req.body.url;
-  let variable=new URL(url);
-  if(variable){
-    dns.lookup(variable.host, (error, address, family) => {
-      if (error) {
-        return res.json({ error: "invalid url" });
-      }
-      Url.count().then((count) => {
-        let simp = new Url({ _id: count + 1, url: url });
-        simp
-          .save()
-          .then((simple) => {
-            if (simple) {
-              return res.json({
-                original_url: simple.url,
-                short_url: simple._id,
-              });
-            }
-          })
-          .catch((err) => {
-            return res.json({ error: err });
-          });
+app.post('/api/users',(req,res)=>{
+  let username=req.body.username;
+  let admin=new Admin({username:username,log:[]});
+  admin.save().then(user=>{
+    if(user){
+      return res.json({
+        _id:user._id,
+        username:user.username
       });
-    });
-  }else{
-    res.json({error:'invalid url'});
+    }
+    return res.json({error:'invalid user'});
+  }).catch(error=>{
+      return res.json({error:error})
+  });
+});
+
+app.post('/api/users/:_id/exercises',(req,res)=>{
+  let id=req.params._id;
+  let desc=req.body.description;
+  let duration=req.body.duration;
+  let date=new Date(req.body.date);
+  if(isNaN(date)){
+    date=new Date();
   }
+  Admin.findById(id).then(admin=>{
+    if(admin){
+      let data={
+        id:id,
+        description:desc,
+        duration:duration,
+        date:date.toDateString()
+      };
+      let log=new Log(data);
+      log.save().then(l=>{
+        if(l){
+          return res.json(data);
+        }
+      })
+    }else{
+      return res.json({error:'User not found'});
+    }
+  }).catch(err=> {
+    console.log(err);
+    return res.json({error:'Error occured'})
+  });
 });
 
-app.get("/api/shorturl/:id", (req, res) => {
-  let id = req.params.id;
-  Url.findById(id)
-    .then((url) => {
-      res.redirect(url.url);
-    })
-    .catch((error) => {
-      res.json({ error: err });
-    });
+app.get('/api/users/:_id/logs',(req,res)=>{
+  Admin.findById(req.params._id).then(admin=>{
+    if(admin){
+      let from=req.query.from;
+      let to=req.query.to;
+      let limit=req.query.limit;
+      let query=Log.find({id:admin._id});
+      if(from){
+        query=query.where('date').gte(new Date(from));
+      }
+      if(to){
+        query=query.where('date').lte(new Date(from));
+      }
+      if(limit){
+        query=query.limit(parseInt(limit));
+      }
+      query=query.select({description:1,duration:1,date:1,_id:0});
+      query.exec().then(data=>{
+        let result={
+          _id:admin._id,
+          username:admin.username,
+          count:data.length,
+          from:from,
+          to:to,
+          log:[]
+        };
+        data.forEach(day=>{
+          let tmp={
+            description:day.description,
+            duration:day.duration,
+            date:day.date.toDateString()
+          }
+          result.log.push(tmp);
+        })
+        return res.json(result)
+      }).catch(err=>{
+        return res.json({
+          _id:admin._id,
+          username:admin.username,
+          count:admin.log.length,
+          log:admin.log
+        })
+      });   
+    }else{
+      return res.json({error:'Invalid id'})
+    }
+  }).catch(err=>{
+    return res.json({error:err})
+  });
 });
 
-app.listen(port, function () {
-  console.log(`Listening on port ${port}`);
-});
+const listener = app.listen(process.env.PORT || 3000, () => {
+  console.log('Your app is listening on port ' + listener.address().port)
+})
