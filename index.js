@@ -33,34 +33,32 @@ app.get("/api/hello", function (req, res) {
 
 app.post("/api/shorturl", (req, res) => {
   let url = req.body.url;
-  let test = url.replace(new RegExp("(https|http)://"), "");
-  if (test.endsWith("/")) {
-    test = test.substring(0, test.length - 1);
-  }
-  if (url.endsWith("/")) {
-    url = test.substring(0, url.length - 1);
-  }
-  dns.lookup(test, (error, address, family) => {
-    if (error) {
-      return res.json({ error: "invalid url" });
-    }
-    Url.count().then((count) => {
-      let simp = new Url({ _id: count + 1, url: url });
-      simp
-        .save()
-        .then((simple) => {
-          if (simple) {
-            return res.json({
-              original_url: simple.url,
-              short_url: simple._id,
-            });
-          }
-        })
-        .catch((err) => {
-          return res.json({ error: err });
-        });
+  let variable=new URL(url);
+  if(variable){
+    dns.lookup(variable.host, (error, address, family) => {
+      if (error) {
+        return res.json({ error: "invalid url" });
+      }
+      Url.count().then((count) => {
+        let simp = new Url({ _id: count + 1, url: url });
+        simp
+          .save()
+          .then((simple) => {
+            if (simple) {
+              return res.json({
+                original_url: simple.url,
+                short_url: simple._id,
+              });
+            }
+          })
+          .catch((err) => {
+            return res.json({ error: err });
+          });
+      });
     });
-  });
+  }else{
+    res.json({error:'invalid url'});
+  }
 });
 
 app.get("/api/shorturl/:id", (req, res) => {
