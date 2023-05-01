@@ -96,7 +96,7 @@ app.get('/api/users/:_id/logs',(req,res)=>{
         query=query.where('date').gte(new Date(from));
       }
       if(to){
-        query=query.where('date').lte(new Date(from));
+        query=query.where('date').lte(new Date(to));
       }
       if(limit){
         query=query.limit(parseInt(limit));
