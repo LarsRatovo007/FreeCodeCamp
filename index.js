@@ -10,7 +10,7 @@ const adminSchema=new mongoose.Schema({
   username:String
 })
 const logSchema=new mongoose.Schema({
-  id:String,
+  owner:String,
   description:String,
   duration:Number,
   date:Date
