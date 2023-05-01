@@ -59,7 +59,7 @@ app.post('/api/users/:_id/exercises',(req,res)=>{
         _id:id,
         username:admin.username,
         description:desc,
-        duration:duration,
+        duration:parseInt(duration),
         date:date.toDateString()
       };
       let log=new Log(data);
